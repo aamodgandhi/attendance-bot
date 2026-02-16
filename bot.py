@@ -27,33 +27,31 @@ def run():
             url = "https://docs.google.com/forms/d/e/1FAIpQLScyoEYQne1Zt273Hrlqx57qUALeL0CrNjn-iL-boUTqzOlFEg/viewform"
             page.goto(url, wait_until="networkidle")
             
-            # 1. Click 'Record Email'
+            # 1. Handle the 'Record Email' checkbox
             page.wait_for_selector('div[role="checkbox"]', timeout=10000)
             checkbox = page.query_selector('div[role="checkbox"]')
             if checkbox and checkbox.get_attribute('aria-checked') == 'false':
                 checkbox.click()
 
-            # 2. Pick random answer
+            # 2. Select a random answer A-E
             choice = random.choice(["A", "B", "C", "D", "E"])
             page.click(f"span:text-is('{choice}')")
-            print(f"Selected choice: {choice}")
+            print(f"Selected: {choice}")
 
-            # 3. Aggressive Submission using internal Google ID
-            submit_selector = 'div[role="button"][jsname="M2Sae"]'
-            page.wait_for_selector(submit_selector, state="visible", timeout=5000)
-            page.click(submit_selector)
+            # 3. Targeted Submission
+            # We use the internal Google ID for the submit button to ensure it fires
+            submit_btn = page.locator('div[role="button"][jsname="M2Sae"]')
+            submit_btn.scroll_into_view_if_needed()
+            submit_btn.click(force=True) # force=True bypasses visibility/layering checks
             
-            # 4. Final verification
-            page.wait_for_load_state("networkidle")
-            if "Your response has been recorded" in page.content():
-                print("Confirmed: Submission successful.")
-            else:
-                page.screenshot(path="failed_submit.png")
-                print("Error: Submission page not confirmed.")
+            # 4. Success Verification
+            # This waits up to 10 seconds for Google's confirmation text
+            page.wait_for_selector('text="Your response has been recorded"', timeout=10000)
+            print("Confirmed: Form successfully submitted to Google.")
 
         except Exception as e:
-            print(f"Crashed with error: {e}")
-            page.screenshot(path="error.png")
+            print(f"Failed: {e}")
+            page.screenshot(path="final_fail_screen.png")
         
         finally:
             browser.close()
