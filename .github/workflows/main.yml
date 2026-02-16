@@ -1,9 +1,10 @@
 name: Attendance Bot
 on:
   schedule:
-    # Runs at 10:20 AM CST (15:20 UTC) every Monday and Wednesday
-    - cron: '20 15 * * 1,3'
-  workflow_dispatch: # Enables the manual "Run workflow" button for testing
+    # 10:05 AM CST is 16:05 UTC. 
+    # The '1,3' represents Monday and Wednesday
+    - cron: '05 16 * * 1,3'
+  workflow_dispatch: 
 
 jobs:
   run-bot:
@@ -20,17 +21,16 @@ jobs:
       - name: Install dependencies
         run: |
           pip install playwright
-          playwright install --with-deps chromium # Installs required system libraries for Linux
+          playwright install --with-deps chromium # Installs Linux system libraries
 
       - name: Run Script
         env:
-          # Injects your JSON cookies from Repository Secrets into the environment
-          GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }} 
+          GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }} # Bridges secret to Python code
         run: python bot.py
 
       - name: Upload Debug Screenshots
-        if: always() # Ensures screenshots upload even if the script crashes
+        if: always() # Uploads even if the script fails so you can debug
         uses: actions/upload-artifact@v4
         with:
           name: debug-screenshots
-          path: "*.png" # Captures error.png or failed_submit.png
+          path: "*.png"
