@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install playwright
-          playwright install chromium
+          playwright install --with-deps chromium
       - name: Run Script
         env:
           GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }} # Injects your secret
