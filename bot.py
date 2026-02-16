@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import time
 from playwright.sync_api import sync_playwright
 
 def run():
@@ -13,11 +14,10 @@ def run():
             return
             
         raw_cookies = json.loads(cookie_json)
-        cleaned_cookies = []
-        for cookie in raw_cookies:
-            if 'sameSite' in cookie and cookie['sameSite'] not in ["Strict", "Lax", "None"]:
-                cookie['sameSite'] = "Lax"
-            cleaned_cookies.append(cookie)
+        cleaned_cookies = [
+            {**c, 'sameSite': 'Lax'} if c.get('sameSite') not in ["Strict", "Lax", "None"] else c 
+            for c in raw_cookies
+        ]
 
         context = browser.new_context()
         context.add_cookies(cleaned_cookies)
@@ -33,25 +33,42 @@ def run():
             if checkbox and checkbox.get_attribute('aria-checked') == 'false':
                 checkbox.click()
 
-            # 2. Select a random answer A-E
+            # 2. Select a random answer
             choice = random.choice(["A", "B", "C", "D", "E"])
             page.click(f"span:text-is('{choice}')")
             print(f"Selected: {choice}")
 
-            # 3. Targeted Submission
-            # We use the internal Google ID for the submit button to ensure it fires
-            submit_btn = page.locator('div[role="button"][jsname="M2Sae"]')
-            submit_btn.scroll_into_view_if_needed()
-            submit_btn.click(force=True) # force=True bypasses visibility/layering checks
+            # --- REDUNDANT SUBMISSION BLOCK ---
+            submit_selector = 'div[role="button"][jsname="M2Sae"]'
             
+            # Method A: Forced Click (Standard)
+            print("Attempting Method A: Forced Click...")
+            page.click(submit_selector, force=True, timeout=5000)
+            
+            # Method B: JavaScript Trigger (Bypasses UI layers)
+            time.sleep(2)
+            if "Your response has been recorded" not in page.content():
+                print("Method A failed. Attempting Method B: JS Click...")
+                page.evaluate(f'document.querySelector(\'{submit_selector}\').click()')
+
+            # Method C: Keyboard Simulation (Direct focus submission)
+            time.sleep(2)
+            if "Your response has been recorded" not in page.content():
+                print("Method B failed. Attempting Method C: Keyboard Enter...")
+                page.focus(submit_selector)
+                page.keyboard.press("Enter")
+
             # 4. Success Verification
-            # This waits up to 10 seconds for Google's confirmation text
-            page.wait_for_selector('text="Your response has been recorded"', timeout=10000)
-            print("Confirmed: Form successfully submitted to Google.")
+            page.wait_for_load_state("networkidle")
+            if "Your response has been recorded" in page.content():
+                print("Confirmed: Submission successful.")
+            else:
+                page.screenshot(path="final_fail_screen.png")
+                print("Error: All submission methods failed.")
 
         except Exception as e:
-            print(f"Failed: {e}")
-            page.screenshot(path="final_fail_screen.png")
+            print(f"System Crash: {e}")
+            page.screenshot(path="error.png")
         
         finally:
             browser.close()
