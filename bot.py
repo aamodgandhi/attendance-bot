@@ -16,10 +16,15 @@ def run():
         cookie_json = os.environ.get('GOOGLE_COOKIES')
         webhook_url = os.environ.get('DISCORD_WEBHOOK_URL')
         
+		# Pulls your ID from the GitHub Secret
+        raw_user_id = os.environ.get('DISCORD_USER_ID')
+        discord_user_id = f"<@{raw_user_id}>" if raw_user_id else ""									  
+													   		
         if not cookie_json:
             print("Error: GOOGLE_COOKIES secret not found!")
             return
             
+																			 
         raw_cookies = json.loads(cookie_json)
         cleaned_cookies = [{**c, 'sameSite': 'Lax'} if c.get('sameSite') not in ["Strict", "Lax", "None"] else c for c in raw_cookies]
 
@@ -69,9 +74,11 @@ def run():
             if "formResponse" in page.url or "recorded" in page.content():
                 print("Confirmed: Submission successful.")
                 if webhook_url:
-                    requests.post(webhook_url, json={
-                        "content": f"✅ **Attendance Logged!**\n**Choice:** {choice}\n**Method:** Redundant Sync"
-                    })
+                    payload = {
+                        "content": f"{discord_user_id} ✅ **Attendance Logged!**\n**Choice:** {choice}\n**Status:** Synced."
+                    }
+                    requests.post(webhook_url, json=payload)
+															
             else:
                 raise Exception("Verification failed: Success screen not reached.")
 
@@ -80,12 +87,12 @@ def run():
             if "formResponse" in page.url or "recorded" in page.content():
                 print("Confirmed: Late-sync success despite error.")
                 if webhook_url:
-                    requests.post(webhook_url, json={"content": f"✅ **Attendance Logged!**\n**Note:** Submission succeeded during late-sync check."})
+                    requests.post(webhook_url, json={"content": f"{discord_user_id} ✅ **Attendance Logged (Late Sync)!**"})
             else:
                 print(f"Bot Error: {e}")
                 page.screenshot(path="final_debug.png")
                 if webhook_url:
-                    requests.post(webhook_url, json={"content": f"⚠️ **Bot Error:** {e}"})
+                    requests.post(webhook_url, json={"content": f"{discord_user_id} ⚠️ **Bot Error:** {e}"})
         
         finally:
             browser.close()
