@@ -26,6 +26,7 @@ jobs:
       - name: Run Script
         env:
           GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }} # Bridges secret to Python code
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python bot.py
 
       - name: Upload Debug Screenshots
