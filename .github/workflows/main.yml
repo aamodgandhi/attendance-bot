@@ -1,8 +1,8 @@
 name: Attendance Bot
 on:
   schedule:
-    - cron: '20 15 * * 1,3' # 10:20 AM CST (15:20 UTC) on Mon/Wed
-    workflow_dispatch:
+    - cron: '20 15 * * 1,3' # 10:20 AM CST on Mon/Wed
+  workflow_dispatch: # This must be aligned with 'schedule'
 
 jobs:
   run-bot:
@@ -18,4 +18,6 @@ jobs:
           pip install playwright
           playwright install chromium
       - name: Run Script
+        env:
+          GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }} # Injects your secret
         run: python bot.py
