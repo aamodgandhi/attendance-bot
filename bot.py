@@ -32,7 +32,8 @@ def run():
         page = context.new_page()
 
         try:
-            url = "https://docs.google.com/forms/d/e/1FAIpQLSey1HilfABtgyjfpxSnT28tPBsIDBco9nzG270MAO0AXbblvw/viewform"
+            # url = "https://docs.google.com/forms/d/e/1FAIpQLSey1HilfABtgyjfpxSnT28tPBsIDBco9nzG270MAO0AXbblvw/viewform"
+            url = "https://docs.google.com/forms/d/e/1FAIpQLScyoEYQne1Zt273Hrlqx57qUALeL0CrNjn-iL-boUTqzOlFEg/viewform?usp=header"
             page.goto(url, wait_until="networkidle")
             
             # 2. Handle the 'Record Email' checkbox
