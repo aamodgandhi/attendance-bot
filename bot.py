@@ -2,11 +2,12 @@ import os
 import json
 import random
 import time
+import requests # Required for Discord notifications
 from playwright.sync_api import sync_playwright
 
 def run():
     # 1. Humanizing Delay: Wait between 1 and 15 minutes
-    # This ensures you don't submit at the exact same second every time
+    # mimicking a student settling into class
     delay = random.randint(60, 900) 
     print(f"Humanizing the bot: Waiting for {delay} seconds before starting...")
     time.sleep(delay)
@@ -14,6 +15,7 @@ def run():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         cookie_json = os.environ.get('GOOGLE_COOKIES')
+        webhook_url = os.environ.get('DISCORD_WEBHOOK_URL') # Secret from GitHub
         
         if not cookie_json:
             print("Error: GOOGLE_COOKIES secret not found!")
@@ -55,16 +57,26 @@ def run():
             time.sleep(3)
             if "Your response has been recorded" not in page.content():
                 print("Method A failed. Attempting Method B: JS Form Submit...")
-                # The Nuclear Option: Triggers the form's internal submit action
+                # The Nuclear Option: Directly triggers the form's submit action
                 page.evaluate('document.forms[0].submit()')
 
-            # 5. Final Verification
+            # 5. Final Verification and Notification
             page.wait_for_selector('text="Your response has been recorded"', timeout=20000)
             print("Confirmed: Submission successful.")
 
+            if webhook_url:
+                payload = {
+                    "username": "Attendance Bot",
+                    "content": f"✅ **Attendance Logged!**\n**Account:** aamodg2@illinois.edu\n**Choice:** {choice}\n**Status:** Confirmed via success screen."
+                }
+                requests.post(webhook_url, json=payload)
+
         except Exception as e:
-            print(f"Final Attempt Failed: {e}")
+            error_msg = f"❌ **Bot Error:** {e}"
+            print(error_msg)
             page.screenshot(path="final_debug.png")
+            if webhook_url:
+                requests.post(webhook_url, json={"content": error_msg})
         
         finally:
             browser.close()
