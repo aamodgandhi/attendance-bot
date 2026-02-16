@@ -1,8 +1,7 @@
 name: Attendance Bot
 on:
   schedule:
-    # 10:05 AM CST is 16:05 UTC. 
-    # The '1,3' represents Monday and Wednesday
+    # Runs at 10:05 AM CST (16:05 UTC) on Monday and Wednesday
     - cron: '05 16 * * 1,3'
   workflow_dispatch: 
 
@@ -20,17 +19,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install playwright requests
-          playwright install --with-deps chromium # Installs Linux system libraries
+          pip install playwright requests # Fixed: Added requests
+          playwright install --with-deps chromium
 
       - name: Run Script
         env:
-          GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }} # Bridges secret to Python code
+          GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python bot.py
 
       - name: Upload Debug Screenshots
-        if: always() # Uploads even if the script fails so you can debug
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: debug-screenshots
