@@ -1,0 +1,20 @@
+name: Attendance Bot
+on:
+  schedule:
+    - cron: '20 15 * * 1,3' # 10:20 AM CST (15:20 UTC) on Mon/Wed
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install playwright
+          playwright install chromium
+      - name: Run Script
+        run: python bot.py
