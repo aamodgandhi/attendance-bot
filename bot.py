@@ -42,35 +42,39 @@ def run():
             print(f"Selected: {choice}")
 
             # 3. Aggressive Submission
+            # We trigger the click and immediately move to verification
             submit_selector = 'div[role="button"][jsname="M2Sae"]'
-            page.locator(submit_selector).click(force=True)
+            print("Triggering submission...")
+            page.locator(submit_selector).click(force=True, timeout=10000)
             
-            # 4. Multi-Layer Verification
-            # We check for the URL change OR the success text
-            print("Verifying submission...")
-            try:
-                # Wait for the URL to contain 'formResponse'
-                page.wait_for_url("**/formResponse", timeout=15000)
+            # 4. Resilient Multi-Layer Verification
+            print("Verifying submission success...")
+            time.sleep(5) # Give the redirect a moment to happen
+            
+            # Check A: Did the URL change to 'formResponse'?
+            if "formResponse" in page.url:
                 success = True
-            except:
-                # Fallback: check if the success text exists in the page content
-                success = "Your response has been recorded" in page.content()
+            # Check B: Is the success text visible in the page source?
+            elif "Your response has been recorded" in page.content():
+                success = True
+            else:
+                success = False
 
             if success:
                 print("Confirmed: Submission successful.")
                 if webhook_url:
                     requests.post(webhook_url, json={
-                        "content": f"✅ **Attendance Logged!**\n**Choice:** {choice}\n**Status:** Confirmed via URL sync."
+                        "content": f"✅ **Attendance Logged!**\n**Choice:** {choice}\n**Status:** Confirmed via late-sync."
                     })
             else:
-                raise Exception("Could not verify success screen.")
+                raise Exception("Could not verify success screen in time.")
 
         except Exception as e:
-            # Check one last time before reporting an error
+            # Final "Safety Net" Check
             if "formResponse" in page.url or "recorded" in page.content():
-                print("Confirmed: Late sync successful.")
+                print("Confirmed: Submission actually succeeded despite UI timeout.")
                 if webhook_url:
-                    requests.post(webhook_url, json={"content": f"✅ **Attendance Logged (Late Sync)!**\n**Choice:** {choice}"})
+                    requests.post(webhook_url, json={"content": f"✅ **Attendance Logged!**\n**Note:** Submission succeeded despite a UI delay."})
             else:
                 print(f"Bot Error: {e}")
                 page.screenshot(path="final_debug.png")
