@@ -26,6 +26,7 @@ jobs:
         env:
           GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
         run: python bot.py
 
       - name: Upload Debug Screenshots
