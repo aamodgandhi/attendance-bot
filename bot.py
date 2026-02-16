@@ -38,37 +38,32 @@ def run():
             page.click(f"span:text-is('{choice}')")
             print(f"Selected: {choice}")
 
-            # --- REDUNDANT SUBMISSION BLOCK ---
-            submit_selector = 'div[role="button"][jsname="M2Sae"]'
+            # 3. Enhanced Redundant Submission
+            # Increased timeout to 15s to prevent the timeout error
+            submit_selector = 'div[role="button"]:has-text("Submit")' 
             
-            # Method A: Forced Click (Standard)
-            print("Attempting Method A: Forced Click...")
-            page.click(submit_selector, force=True, timeout=5000)
+            print("Waiting for submit button and scrolling...")
+            submit_btn = page.locator(submit_selector)
+            submit_btn.scroll_into_view_if_needed()
+            submit_btn.wait_for(state="visible", timeout=15000)
+
+            # Method A: Standard Click
+            print("Attempting Method A: Click...")
+            submit_btn.click(force=True)
             
-            # Method B: JavaScript Trigger (Bypasses UI layers)
-            time.sleep(2)
+            # Method B: JavaScript Trigger (Redundancy)
+            time.sleep(3)
             if "Your response has been recorded" not in page.content():
-                print("Method A failed. Attempting Method B: JS Click...")
-                page.evaluate(f'document.querySelector(\'{submit_selector}\').click()')
+                print("Method A likely failed. Attempting Method B: JS Click...")
+                page.evaluate('document.querySelector(\'div[role="button"][jsname="M2Sae"]\').click()')
 
-            # Method C: Keyboard Simulation (Direct focus submission)
-            time.sleep(2)
-            if "Your response has been recorded" not in page.content():
-                print("Method B failed. Attempting Method C: Keyboard Enter...")
-                page.focus(submit_selector)
-                page.keyboard.press("Enter")
-
-            # 4. Success Verification
-            page.wait_for_load_state("networkidle")
-            if "Your response has been recorded" in page.content():
-                print("Confirmed: Submission successful.")
-            else:
-                page.screenshot(path="final_fail_screen.png")
-                print("Error: All submission methods failed.")
+            # 4. Final Verification
+            page.wait_for_selector('text="Your response has been recorded"', timeout=10000)
+            print("Confirmed: Submission successful.")
 
         except Exception as e:
-            print(f"System Crash: {e}")
-            page.screenshot(path="error.png")
+            print(f"Failed at step: {e}")
+            page.screenshot(path="timeout_debug.png")
         
         finally:
             browser.close()
