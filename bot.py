@@ -5,6 +5,12 @@ import time
 from playwright.sync_api import sync_playwright
 
 def run():
+    # 1. Humanizing Delay: Wait between 1 and 15 minutes
+    # This ensures you don't submit at the exact same second every time
+    delay = random.randint(60, 900) 
+    print(f"Humanizing the bot: Waiting for {delay} seconds before starting...")
+    time.sleep(delay)
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         cookie_json = os.environ.get('GOOGLE_COOKIES')
@@ -27,43 +33,38 @@ def run():
             url = "https://docs.google.com/forms/d/e/1FAIpQLSey1HilfABtgyjfpxSnT28tPBsIDBco9nzG270MAO0AXbblvw/viewform"
             page.goto(url, wait_until="networkidle")
             
-            # 1. Handle the 'Record Email' checkbox
+            # 2. Handle the 'Record Email' checkbox
             page.wait_for_selector('div[role="checkbox"]', timeout=10000)
             checkbox = page.query_selector('div[role="checkbox"]')
             if checkbox and checkbox.get_attribute('aria-checked') == 'false':
                 checkbox.click()
 
-            # 2. Select a random answer
+            # 3. Select a random answer
             choice = random.choice(["A", "B", "C", "D", "E"])
             page.click(f"span:text-is('{choice}')")
             print(f"Selected: {choice}")
 
-            # 3. Enhanced Redundant Submission
-            # Increased timeout to 15s to prevent the timeout error
-            submit_selector = 'div[role="button"]:has-text("Submit")' 
+            # 4. Triple-Redundant Submission
+            submit_selector = 'div[role="button"][jsname="M2Sae"]'
             
-            print("Waiting for submit button and scrolling...")
-            submit_btn = page.locator(submit_selector)
-            submit_btn.scroll_into_view_if_needed()
-            submit_btn.wait_for(state="visible", timeout=15000)
-
-            # Method A: Standard Click
-            print("Attempting Method A: Click...")
-            submit_btn.click(force=True)
+            print("Attempting Method A: Scroll and Click...")
+            btn = page.locator(submit_selector)
+            btn.scroll_into_view_if_needed()
+            btn.click(force=True, timeout=5000)
             
-            # Method B: JavaScript Trigger (Redundancy)
             time.sleep(3)
             if "Your response has been recorded" not in page.content():
-                print("Method A likely failed. Attempting Method B: JS Click...")
-                page.evaluate('document.querySelector(\'div[role="button"][jsname="M2Sae"]\').click()')
+                print("Method A failed. Attempting Method B: JS Form Submit...")
+                # The Nuclear Option: Triggers the form's internal submit action
+                page.evaluate('document.forms[0].submit()')
 
-            # 4. Final Verification
-            page.wait_for_selector('text="Your response has been recorded"', timeout=10000)
+            # 5. Final Verification
+            page.wait_for_selector('text="Your response has been recorded"', timeout=20000)
             print("Confirmed: Submission successful.")
 
         except Exception as e:
-            print(f"Failed at step: {e}")
-            page.screenshot(path="timeout_debug.png")
+            print(f"Final Attempt Failed: {e}")
+            page.screenshot(path="final_debug.png")
         
         finally:
             browser.close()
