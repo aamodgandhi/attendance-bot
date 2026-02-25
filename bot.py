@@ -9,7 +9,7 @@ def run():
     # Humanizing Delay
     delay = random.randint(60, 300) 
     print(f"Humanizing the bot: Waiting for {delay} seconds...")
-    time.sleep(delay)
+    time.sleep(0)
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
