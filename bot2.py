@@ -13,7 +13,7 @@ def run():
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        cookie_json = os.environ.get('GOOGLE_COOKIES') # Keep secret name or rename to MS_COOKIES
+        cookie_json = os.environ.get('GOOGLE_COOKIES_2') # Keep secret name or rename to MS_COOKIES
         webhook_url = os.environ.get('DISCORD_WEBHOOK_URL')
         raw_user_id = os.environ.get('DISCORD_USER_ID')
         discord_user_id = f"<@{raw_user_id}>" if raw_user_id else ""
