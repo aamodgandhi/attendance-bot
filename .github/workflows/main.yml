@@ -25,9 +25,10 @@ jobs:
       - name: Run Script
         env:
           GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }}
+          GOOGLE_COOKIES_2: ${{ secrets.GOOGLE_COOKIES_2 }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
-        run: python bot.py
+        run: python bot2.py
 
       - name: Upload Debug Screenshots
         if: always()
