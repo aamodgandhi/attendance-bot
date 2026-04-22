@@ -7,7 +7,7 @@ from playwright.sync_api import sync_playwright
 
 def run():
     # 1. Humanizing Delay
-    delay = random.randint(60, 300) 
+    delay = random.randint(1, 5) 
     print(f"Humanizing the bot: Waiting for {delay} seconds...")
     time.sleep(delay)
 
