@@ -13,7 +13,6 @@ def run():
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        # Pulling from the requested GOOGLE_COOKIES_2 secret
         cookie_json = os.environ.get('GOOGLE_COOKIES_2')
         webhook_url = os.environ.get('DISCORD_WEBHOOK_URL')
         raw_user_id = os.environ.get('DISCORD_USER_ID')
@@ -31,12 +30,10 @@ def run():
         page = context.new_page()
 
         try:
-            # Using the provided ECE 110 Microsoft Form URL
             url = "https://forms.office.com/Pages/ResponsePage.aspx?id=b35GRCxGok6CP3gA3lQ049-nlvMuF6NIt-MIux7DYXVUMTFKU1UzMkNXWUVORkpHMDZFVVROVFZJRi4u&origin=QRCode&sid=7417a3a4-3d80-44e5-be6a-4e092e626cdd"
             page.goto(url, wait_until="networkidle")
 
             # 2. Select a random option
-            # Using get_by_role("radio") fixes the strict mode violation error
             choice = random.choice(["A", "B", "C", "D", "E"])
             page.get_by_role("radio", name=choice).click()
             print(f"Selected Choice: {choice}")
@@ -46,7 +43,8 @@ def run():
             submit_btn.click(force=True)
 
             # 4. Verification
-            page.wait_for_selector('text="Your response was submitted"', timeout=15000)
+            # Updated to match the exact text seen in your debug image
+            page.wait_for_selector('text="Your answers have been submitted successfully"', timeout=15000)
             print("Confirmed: Microsoft Form submitted.")
 
             if webhook_url:
@@ -55,10 +53,16 @@ def run():
                 })
 
         except Exception as e:
-            print(f"Bot Error: {e}")
-            page.screenshot(path="final_debug.png")
-            if webhook_url:
-                requests.post(webhook_url, json={"content": f"{discord_user_id} ⚠️ **Bot Error:** {e}"})
+            # Final check to see if we actually made it to the success page despite the error
+            if "submitted successfully" in page.content():
+                print("Confirmed: Submission succeeded via late-sync check.")
+                if webhook_url:
+                    requests.post(webhook_url, json={"content": f"{discord_user_id} ✅ **Attendance Logged!** (Verified via content check)"})
+            else:
+                print(f"Bot Error: {e}")
+                page.screenshot(path="final_debug.png")
+                if webhook_url:
+                    requests.post(webhook_url, json={"content": f"{discord_user_id} ⚠️ **Bot Error:** {e}"})
 
         finally:
             browser.close()
